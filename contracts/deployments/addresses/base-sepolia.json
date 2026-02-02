@@ -1,0 +1,23 @@
+{
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "deployedAt": "2026-01-31",
+  "deployer": "0x393120A3d6fEd2b30887dfC8e65E9a45601A1aD6",
+  "contracts": {
+    "MockUSDC": "0x17e0491422685c309bFB6aDAF662c2832b41eF4E",
+    "MockMegapot": "0xe7a6A816DD03d71e858D40B952721063ff83B53A",
+    "LotteryToken": "0x10117dF540d74A9595Fa08F56426bb3C28FF22c9",
+    "LotteryTreasury": "0xDB689D685F34A6335Ae12b042953fC9f9db73003",
+    "LotteryMiner": "0xAFD683F33cBdC83790BCf73eA6D44582eB9d935F",
+    "MegapotRouter": "0xd820D03ace8E62cAE633Aa5A2a75786BFC65AA8e",
+    "ReferralCollector": "0x7987dEbcA51e70e702f969046D8115540c59ff4B",
+    "LPPair": "0x49b04ED2133e6aA890650542b8C03b5426E844f0",
+    "BuybackBurner": "0x035b0cE12bAA3cF4A32C8AC467f7A70Cb38894Aa"
+  },
+  "lp": {
+    "lottery": "5000000",
+    "usdc": "1000",
+    "price": "0.0002"
+  },
+  "notes": "v4 deployment with 5% premine for LP. Complete deployment."
+}

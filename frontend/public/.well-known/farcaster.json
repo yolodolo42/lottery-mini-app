@@ -1,0 +1,17 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjAsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIn0",
+    "payload": "eyJkb21haW4iOiJZT1VSX0RPTUFJTiJ9",
+    "signature": "testnet-placeholder"
+  },
+  "frame": {
+    "version": "1",
+    "name": "$LOTTERY",
+    "iconUrl": "https://YOUR_DOMAIN/icon.png",
+    "homeUrl": "https://YOUR_DOMAIN",
+    "imageUrl": "https://YOUR_DOMAIN/og-image.png",
+    "buttonTitle": "Play $LOTTERY",
+    "splashImageUrl": "https://YOUR_DOMAIN/splash.png",
+    "splashBackgroundColor": "#1a1a1a"
+  }
+}

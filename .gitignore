@@ -1,0 +1,16 @@
+# Project-specific
+PROGRESS.md
+.mcp.json
+reports
+.env
+contracts/broadcast/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+CLAUDE.md
+PROGRESS.md
