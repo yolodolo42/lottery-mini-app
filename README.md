@@ -6,7 +6,7 @@ King-of-the-Hill DeFi game on Base. Bid USDC to become King and earn $LOTTERY to
 
 ## How It Works
 
-1. **Bid USDC** to become the King
+1. **Bid USDC** to become the King.
 2. **Earn 1 $LOTTERY/sec** while you're King
 3. **Get outbid?** Receive 20-80% of the new bid (time-decaying)
 4. **Price decays** over 24 hours (2x→1.1x→$1) to keep the game moving
