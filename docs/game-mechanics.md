@@ -13,14 +13,14 @@ The bid price decays over time using a Dutch auction:
 **Example:** If someone bid $100 USDC:
 - Immediately after: ~$200
 - After 1 hour: ~$110
-- After 12 hours: ~$55
+- After 12 hours: ~$62
 - After 24 hours: $10
 
 The absolute minimum bid is **$10 USDC**.
 
 ## Payout to Previous King
 
-When dethroned, the previous King receives a percentage of the new bid. This percentage decreases the longer they held the throne:
+When dethroned, the previous King receives a percentage of the new bid in USDC. This percentage decreases the longer they held the throne:
 
 | Reign Duration | Payout % |
 |----------------|----------|
@@ -29,19 +29,55 @@ When dethroned, the previous King receives a percentage of the new bid. This per
 | 6 - 24 hours | 60% → 20% (linear decay) |
 | 24+ hours | 20% |
 
-**Rationale:** Quick dethroning is rewarded. If you hold for a long time, you've already earned more emissions.
+Quick dethroning is rewarded. If you hold for a long time, you've already earned more emissions.
 
 ## Fee Distribution
 
-Every bid is split:
+Every bid is split three ways:
 
 | Recipient | Percentage |
 |-----------|------------|
-| Previous King | 20-80% (time-based) |
-| Treasury | 15% |
-| Creator | 5% |
+| Previous King | 20-80% (time-based decay) |
+| Creator | 5% (fixed) |
+| Treasury | Remainder (15-75%) |
 
-On first bid (no previous King), the 80% goes to treasury instead.
+Treasury receives the residual — whatever is left after the previous king and creator are paid. When the previous king gets 80%, treasury gets 15%. When the previous king gets 20%, treasury gets 75%.
+
+On first bid (no previous King), the previous king's share goes to treasury instead. Treasury receives 95%, creator receives 5%.
+
+## Megapot Integration
+
+A configurable portion of each treasury deposit (default ~67%) automatically purchases **Megapot lottery tickets**. The remaining ~33% goes to the reserve pool. The owner can adjust this split from 0% to 100% via `setMegapotBps()`.
+
+Ticket purchases are routed through the **MegapotRouter**, which sets the referral address to the **ReferralCollector** contract. Every ticket purchase generates referral fees that flow back into the LOTTERY ecosystem.
+
+If the Megapot ticket purchase fails (e.g. Megapot is paused), the USDC stays in the Megapot pool and retries on the next deposit.
+
+**The flow:**
+```
+Bid USDC → 15-75% to Treasury → Auto-buy Megapot tickets
+                                        ↓
+                                Megapot referral fees
+                                        ↓
+                              ReferralCollector contract
+                                ↓               ↓
+                          50% to King    50% to Treasury
+```
+
+## Referral Fee Distribution
+
+Megapot pays referral fees on ticket purchases. The ReferralCollector splits them:
+
+| Recipient | Share |
+|-----------|-------|
+| Current King | 50% |
+| Treasury | 50% |
+
+- `harvest()` is **permissionless** — anyone can call it
+- If there's no King, 100% goes to treasury
+- Fees are paid in USDC, not $LOTTERY
+
+More bids → more tickets → more referral fees → more reasons to be King.
 
 ## Token Emissions
 
@@ -50,6 +86,7 @@ The current King earns $LOTTERY at a fixed rate:
 - **Rate:** 1 token per second
 - **Cap:** 7 days maximum (604,800 tokens)
 - **Claiming:** Manual claim anytime, or auto-paid on dethrone
+- **Max supply:** Once 100M tokens are minted, emissions stop. The contract catches the mint failure and proceeds normally — the king still receives their USDC payout but no new tokens.
 
 Emissions reset when you claim. If you claim after 3 days, then wait 4 more days as King, you can claim again.
 
