@@ -34,8 +34,8 @@ Core game contract:
 - Handles dethrone bids (`mine()`)
 - Tracks current King and emissions
 - Distributes bid fees: previous king (20-80%), creator (5%), treasury (residual)
-- Mints $LOTTERY on dethrone or claim. If max supply is reached, mint fails silently — USDC payout still proceeds.
-- Pausable by creator (max 7 days, auto-unpauses). Pause only blocks new bids — claiming emissions is always available.
+- Mints $LOTTERY on dethrone or claim. If max supply is reached, mint fails silently but the USDC payout still proceeds.
+- Pausable by creator (max 7 days, auto-unpauses). Pause only blocks new bids. Claiming emissions is always available.
 
 ### LotteryTreasury
 Fee management:
@@ -59,7 +59,7 @@ Referral fee capture:
 Referral fee distribution:
 - Collects Megapot referral fees
 - Splits 50/50 between current King (USDC) and treasury
-- `harvest()` is permissionless — anyone can trigger distribution
+- `harvest()` is permissionless. Anyone can trigger distribution.
 - If no King, 100% goes to treasury
 
 ### BuybackBurner

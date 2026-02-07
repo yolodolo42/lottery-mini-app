@@ -8,11 +8,11 @@ LOTTERY is an onchain game on Base. One player holds the "King" position at a ti
 
 Anyone can dethrone the current King by placing a higher bid. When dethroned, the previous King receives a USDC payout from the new bid plus any accumulated $LOTTERY emissions.
 
-Every bid also feeds the treasury, which auto-buys Megapot lottery tickets. Megapot pays referral fees on those purchases — the current King gets 50% of those fees in USDC. So being King earns you tokens *and* stablecoin income simultaneously.
+Every bid also feeds the treasury, which auto-buys Megapot lottery tickets. Megapot pays referral fees on those purchases, and the current King gets 50% of those fees in USDC. So being King earns you tokens *and* stablecoin income at the same time.
 
 ## Why Play?
 
-- **Megapot exposure**: Treasury auto-buys lottery tickets with every bid — a shot at the Megapot jackpot
+- **Megapot exposure**: Treasury auto-buys lottery tickets with every bid, giving the protocol a shot at the Megapot jackpot
 - **Referral cashflow**: Kings earn 50% of Megapot referral fees in USDC
 - **Earn tokens**: Kings earn 1 $LOTTERY per second (up to 7-day cap)
 - **Get paid when dethroned**: Receive 20-80% of the next bid in USDC

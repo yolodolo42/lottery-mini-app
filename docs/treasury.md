@@ -15,11 +15,11 @@ The Megapot/reserve split is configurable by the owner via `setMegapotBps()` (ra
 
 Every bid triggers an automatic Megapot ticket purchase:
 
-1. **Bid happens** — treasury share (15-75%) goes to LotteryTreasury
-2. **Treasury splits deposit** — between Megapot pool and reserve pool
-3. **Auto-purchase** — treasury buys Megapot tickets immediately
-4. **Routing** — purchases go through MegapotRouter with referral set to ReferralCollector
-5. **Referral fees accumulate** — Megapot pays referral fees to the ReferralCollector
+1. **Bid happens.** Treasury share (15-75%) goes to LotteryTreasury.
+2. **Treasury splits the deposit** between Megapot pool and reserve pool.
+3. **Auto-purchase.** Treasury buys Megapot tickets immediately.
+4. **Routing.** Purchases go through MegapotRouter with referral set to ReferralCollector.
+5. **Referral fees accumulate.** Megapot pays referral fees to the ReferralCollector.
 
 If the Megapot purchase fails (e.g. Megapot is paused or unavailable), the USDC stays in the Megapot pool and retries automatically on the next deposit.
 
@@ -38,14 +38,14 @@ Every bid
          └─ ~33% to reserve pool
 ```
 
-The `harvest()` function on ReferralCollector is **permissionless** — anyone can call it to distribute pending referral fees.
+The `harvest()` function on ReferralCollector is **permissionless**. Anyone can call it to distribute pending referral fees.
 
 ## Reserve Pool
 
 The reserve pool holds USDC not allocated to Megapot tickets. Uses:
 
-- **BuybackBurner funding** — governance calls `transferToBuyback()` to send reserve USDC to the BuybackBurner. This is a manual governance action, not automatic.
-- **Governance withdrawals** — governance can withdraw via `withdraw()`. Requires a governance address to be set (TimelockController or Governor).
+- **BuybackBurner funding.** Governance calls `transferToBuyback()` to send reserve USDC to the BuybackBurner. This is a manual governance action, not automatic.
+- **Governance withdrawals.** Governance can withdraw via `withdraw()`. Requires a governance address to be set (TimelockController or Governor).
 
 The reserve cannot be withdrawn by the owner or creator. Only a governance contract can move reserve funds.
 
@@ -55,11 +55,11 @@ A Dutch auction that lets LP holders sell their LOTTERY/USDC LP tokens to the pr
 
 ### How It Works
 
-1. **Governance funds it** — calls `transferToBuyback()` on treasury, sending USDC to BuybackBurner
-2. **Auction starts** — price starts high, decays linearly to 0 over the epoch period
-3. **LP holders sell** — call `buy()` with their LP tokens, receive USDC at the current auction price
-4. **LP is burned** — sent to `0x000...dEaD`, permanently removed from supply
-5. **Price resets** — new epoch starts at 1.2x the purchase price
+1. **Governance funds it.** Calls `transferToBuyback()` on treasury, sending USDC to BuybackBurner.
+2. **Auction starts.** Price starts high, decays linearly to 0 over the epoch period.
+3. **LP holders sell.** They call `buy()` with their LP tokens and receive USDC at the current auction price.
+4. **LP is burned.** Sent to `0x000...dEaD`, permanently removed from supply.
+5. **Price resets.** New epoch starts at 1.2x the purchase price.
 
 ### Why Participate?
 
@@ -79,6 +79,6 @@ Burning LP tokens permanently removes them from circulation. The underlying LOTT
 
 ### Protection
 
-- **epochId** — must match current epoch (prevents frontrunning)
-- **deadline** — transaction expiry
-- **maxUsdcExpected** — slippage protection
+- **epochId** must match current epoch (prevents frontrunning)
+- **deadline** for transaction expiry
+- **maxUsdcExpected** for slippage protection

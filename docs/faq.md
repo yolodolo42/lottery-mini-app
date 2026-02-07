@@ -31,7 +31,7 @@ Megapot is a decentralized lottery on Base. The LOTTERY treasury auto-buys Megap
 When the treasury buys Megapot tickets, the purchase is routed through MegapotRouter with a referral set to the ReferralCollector. Megapot pays referral fees on these purchases. The ReferralCollector splits them: 50% to the current King, 50% back to treasury.
 
 ### How do I collect referral fees?
-Call `harvest()` on the ReferralCollector contract. It's permissionless — anyone can trigger it. The current King automatically receives their 50% share in USDC.
+Call `harvest()` on the ReferralCollector contract. It's permissionless, so anyone can trigger it. The current King automatically receives their 50% share in USDC.
 
 ### What if Megapot is down?
 If the ticket purchase fails, USDC stays in the treasury's Megapot pool and retries on the next deposit. If Megapot becomes permanently unavailable, governance can rescue stuck funds via `rescueMegapotPool()`.
@@ -42,7 +42,7 @@ It creates a cashflow loop. More bids → more Megapot tickets → more referral
 ## Treasury
 
 ### Where does treasury money come from?
-The treasury receives the residual from every bid — between 15% and 75%, depending on how long the previous king held. When the previous king gets 80% (dethroned within 1 hour), treasury gets 15%. When the previous king gets 20% (held 24+ hours), treasury gets 75%.
+The treasury receives whatever is left from each bid after paying the previous king and creator. That's between 15% and 75%, depending on how long the previous king held. If they were dethroned within 1 hour (80% payout), treasury gets 15%. If they held for 24+ hours (20% payout), treasury gets 75%.
 
 ### How is treasury split?
 By default, ~67% of each deposit buys Megapot tickets and ~33% goes to the reserve pool. This ratio is configurable by the owner.

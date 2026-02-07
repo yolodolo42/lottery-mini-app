@@ -41,7 +41,7 @@ Every bid is split three ways:
 | Creator | 5% (fixed) |
 | Treasury | Remainder (15-75%) |
 
-Treasury receives the residual — whatever is left after the previous king and creator are paid. When the previous king gets 80%, treasury gets 15%. When the previous king gets 20%, treasury gets 75%.
+Treasury receives whatever is left after the previous king and creator are paid. When the previous king gets 80%, treasury gets 15%. When the previous king gets 20%, treasury gets 75%.
 
 On first bid (no previous King), the previous king's share goes to treasury instead. Treasury receives 95%, creator receives 5%.
 
@@ -73,7 +73,7 @@ Megapot pays referral fees on ticket purchases. The ReferralCollector splits the
 | Current King | 50% |
 | Treasury | 50% |
 
-- `harvest()` is **permissionless** — anyone can call it
+- `harvest()` is **permissionless**. Anyone can call it.
 - If there's no King, 100% goes to treasury
 - Fees are paid in USDC, not $LOTTERY
 
@@ -86,7 +86,7 @@ The current King earns $LOTTERY at a fixed rate:
 - **Rate:** 1 token per second
 - **Cap:** 7 days maximum (604,800 tokens)
 - **Claiming:** Manual claim anytime, or auto-paid on dethrone
-- **Max supply:** Once 100M tokens are minted, emissions stop. The contract catches the mint failure and proceeds normally — the king still receives their USDC payout but no new tokens.
+- **Max supply:** Once 100M tokens are minted, emissions stop. The contract catches the mint failure and proceeds normally. The king still receives their USDC payout, but no new tokens are minted.
 
 Emissions reset when you claim. If you claim after 3 days, then wait 4 more days as King, you can claim again.
 

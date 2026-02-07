@@ -80,7 +80,7 @@ The BuybackBurner can permanently reduce LP supply over time by buying and burni
 $LOTTERY is a pure game token:
 - Earned by being King
 - Tradeable on Uniswap V2 (LOTTERY/USDC pair)
-- Governance-ready (ERC20Votes) — no governance contracts deployed yet
+- Governance-ready (ERC20Votes). No governance contracts deployed yet.
 
 Future governance may control:
 - Treasury reserve withdrawals

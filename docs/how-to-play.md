@@ -33,7 +33,7 @@ While you are King, you also earn **50% of Megapot referral fees** in USDC.
 
 Every bid sends a portion to the treasury. The treasury auto-buys Megapot lottery tickets via the MegapotRouter. Megapot pays referral fees on those ticket purchases back to the ReferralCollector. The ReferralCollector splits them: **50% to the current King, 50% to treasury.**
 
-Anyone can trigger the `harvest()` function on the ReferralCollector to distribute pending referral fees — it's permissionless.
+Anyone can trigger the `harvest()` function on the ReferralCollector to distribute pending referral fees. It's permissionless.
 
 ## Claiming Rewards
 
