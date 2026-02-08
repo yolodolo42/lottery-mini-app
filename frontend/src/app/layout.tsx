@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const BASE_URL = "https://YOUR_DOMAIN"; // TODO: Update after deployment
+const BASE_URL = "https://frontend-yolodolos-projects.vercel.app";
 
 export const metadata: Metadata = {
   title: "$LOTTERY - King Game",
@@ -30,11 +30,20 @@ export const metadata: Metadata = {
     images: [`${BASE_URL}/og-image.png`],
   },
   other: {
-    "fc:frame": "vNext",
-    "fc:frame:image": `${BASE_URL}/og-image.png`,
-    "fc:frame:button:1": "Play $LOTTERY",
-    "fc:frame:button:1:action": "launch_frame",
-    "fc:frame:button:1:target": BASE_URL,
+    "fc:frame": JSON.stringify({
+      version: "1",
+      imageUrl: `${BASE_URL}/og-image.png`,
+      button: {
+        title: "Play $LOTTERY",
+        action: {
+          type: "launch_frame",
+          name: "$LOTTERY",
+          url: BASE_URL,
+          splashImageUrl: `${BASE_URL}/splash.png`,
+          splashBackgroundColor: "#1a1a1a",
+        },
+      },
+    }),
   },
 };
 
