@@ -4,8 +4,8 @@ import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector'
 import { injected } from 'wagmi/connectors'
 
 // Target chain for this app
-export const TARGET_CHAIN = baseSepolia
-export const TARGET_CHAIN_ID = baseSepolia.id
+export const TARGET_CHAIN = base
+export const TARGET_CHAIN_ID = base.id
 
 // Dev wallet connector for local testing (MetaMask)
 // In production (Warpcast), only Farcaster connector is used
