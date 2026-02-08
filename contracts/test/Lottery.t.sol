@@ -7,6 +7,7 @@ import "../src/LotteryMiner.sol";
 import "../src/LotteryTreasury.sol";
 import "../src/MegapotRouter.sol";
 import "../src/ReferralCollector.sol";
+import "../src/BuybackBurner.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Mock USDC
@@ -32,6 +33,7 @@ contract MockMegapot {
 
     // v2: Referral fee tracking
     mapping(address => uint256) public referralFeesClaimable;
+    mapping(address => uint256) public winnings;
     address public lastReferrer;
 
     constructor(address _usdc) {
@@ -67,6 +69,22 @@ contract MockMegapot {
         referralFeesClaimable[msg.sender] = 0;
         usdc.transfer(msg.sender, amount);
         return true;
+    }
+
+    function referralFeeBps() external pure returns (uint256) { return 1000; }
+
+    function usersInfo(address user) external view returns (uint256, uint256, bool) {
+        return (0, winnings[user], winnings[user] > 0);
+    }
+
+    function withdrawWinnings() external {
+        uint256 amount = winnings[msg.sender];
+        winnings[msg.sender] = 0;
+        usdc.transfer(msg.sender, amount);
+    }
+
+    function setWinnings(address user, uint256 amount) external {
+        winnings[user] = amount;
     }
 }
 
@@ -1584,6 +1602,97 @@ contract LotteryTest is Test {
         // Second mine should work - emissions are handled gracefully
         _mineAs(bob, 200e6);
         assertEq(miner.king(), bob);
+    }
+
+    // ============ Audit Fix Tests ============
+
+    function test_TransferToBuyback_Success() public {
+        // Deploy a real BuybackBurner for this test
+        BuybackBurner burner = new BuybackBurner(
+            address(usdc),
+            address(usdc), // lpToken placeholder (not used in this test)
+            owner,
+            24 hours,  // epochPeriod
+            12000,     // priceMultiplier
+            1e6,       // minInitPrice
+            1e6        // initPrice
+        );
+
+        vm.prank(owner);
+        treasury.setBuybackBurner(address(burner));
+
+        // Fund treasury reserve via mine
+        _mineAs(alice, 100e6);
+        (, uint256 reserve) = treasury.getPoolBalances();
+        assertGt(reserve, 0);
+
+        // Setup governance
+        vm.prank(owner);
+        treasury.setGovernance(owner);
+
+        // Transfer to buyback (was broken before M-2 fix)
+        vm.prank(owner);
+        treasury.transferToBuyback(reserve);
+
+        assertEq(burner.usdcAccumulated(), reserve);
+    }
+
+    function test_DustAmount_SkipsTicketPurchase() public {
+        // Set megapotBps so that treasury allocation is < 1 USDC
+        vm.prank(owner);
+        treasury.setMegapotBps(1); // 1/1500 of deposit goes to megapot
+
+        // Mine with minimum bid (10 USDC). Treasury gets 15% = 1.5 USDC.
+        // megapotPool = 1.5 * 1/1500 = 0.001 USDC = 1000 (< 1e6)
+        _mineAs(alice, 10e6);
+
+        // megapotPool should retain the dust (not attempt purchase)
+        (uint256 megapotPool,) = treasury.getPoolBalances();
+        assertGt(megapotPool, 0);
+        assertLt(megapotPool, 1e6);
+        assertEq(treasury.totalTicketsPurchased(), 0);
+    }
+
+    function test_AutoClaimWinnings_OnDeposit() public {
+        // Give treasury some winnings in the mock
+        usdc.mint(address(megapot), 1000e6);
+        megapot.setWinnings(address(treasury), 1000e6);
+
+        (, uint256 reserveBefore) = treasury.getPoolBalances();
+
+        // Mine triggers deposit which triggers _tryClaimWinnings
+        _mineAs(alice, 100e6);
+
+        (, uint256 reserveAfter) = treasury.getPoolBalances();
+
+        // Reserve should include the 1000 USDC winnings + normal reserve deposit
+        uint256 normalReserve = reserveAfter - reserveBefore;
+        // Treasury gets 15% of 100 = 15 USDC. megapotBps=1000/1500 to megapot, rest to reserve.
+        // Plus 1000 USDC from winnings claim
+        assertGt(normalReserve, 1000e6, "reserve should include winnings");
+    }
+
+    function test_AutoClaimWinnings_SilentFailure() public {
+        // No winnings set — _tryClaimWinnings should not revert
+        _mineAs(alice, 100e6);
+        assertEq(miner.king(), alice); // mine succeeded
+    }
+
+    function test_GovernanceClaimWinnings_StillWorks() public {
+        // Governance fallback should still work
+        usdc.mint(address(megapot), 500e6);
+        megapot.setWinnings(address(treasury), 500e6);
+
+        vm.prank(owner);
+        treasury.setGovernance(owner);
+
+        (, uint256 reserveBefore) = treasury.getPoolBalances();
+
+        vm.prank(owner);
+        treasury.claimMegapotWinnings();
+
+        (, uint256 reserveAfter) = treasury.getPoolBalances();
+        assertEq(reserveAfter - reserveBefore, 500e6);
     }
 
     function test_Router_ReturnsTrue() public {

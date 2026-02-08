@@ -177,7 +177,7 @@ contract LotteryMiner is ReentrancyGuard, Pausable {
 
         usdc.safeTransfer(creator, creatorAmount);
 
-        usdc.approve(address(treasury), treasuryAmount);
+        usdc.forceApprove(address(treasury), treasuryAmount);
         treasury.deposit(treasuryAmount);
 
         emit NewKing(msg.sender, bidAmount, prevKingAmount);

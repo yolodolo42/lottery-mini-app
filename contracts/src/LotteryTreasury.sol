@@ -37,11 +37,15 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
     event TicketsPurchased(uint256 amount, uint256 tickets);
     event MegapotWinningsClaimed(uint256 amount);
     event TicketPurchaseFailed(uint256 amount);
+    event WinningsClaimFailed();
     event MegapotBpsUpdated(uint256 oldBps, uint256 newBps);
     event Withdrawn(address indexed to, uint256 amount);
     event GovernanceSet(address indexed governance);
     event MegapotPoolRescued(address indexed to, uint256 amount);
     event TransferredToBuyback(uint256 amount);
+    event MinerSet(address indexed miner);
+    event MegapotRouterSet(address indexed router);
+    event BuybackBurnerSet(address indexed burner);
 
     // Errors
     error OnlyMiner();
@@ -82,6 +86,7 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         if (miner != address(0)) revert MinerAlreadySet();
         if (_miner == address(0)) revert ZeroAddress();
         miner = _miner;
+        emit MinerSet(_miner);
     }
 
     /// @notice Owner: set Megapot router address (one-time only)
@@ -89,6 +94,7 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         if (megapotRouter != address(0)) revert RouterAlreadySet();
         if (_router == address(0)) revert ZeroAddress();
         megapotRouter = _router;
+        emit MegapotRouterSet(_router);
     }
 
     /// @notice Owner: set BuybackBurner address (one-time only)
@@ -96,6 +102,7 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         if (buybackBurner != address(0)) revert BuybackBurnerAlreadySet();
         if (_burner == address(0)) revert ZeroAddress();
         buybackBurner = _burner;
+        emit BuybackBurnerSet(_burner);
     }
 
     /// @notice Called by miner to deposit treasury fees
@@ -113,15 +120,36 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         emit Deposit(amount, toMegapot, toReserve);
 
         _tryPurchaseTickets();
+        _tryClaimWinnings();
     }
 
     function _tryPurchaseTickets() internal {
         uint256 amount = megapotPool;
-        if (amount == 0) return;
+        if (amount < 1e6) return; // M-1: skip if less than 1 ticket
 
         try this._executePurchase(amount) {} catch {
             emit TicketPurchaseFailed(amount);
         }
+    }
+
+    function _tryClaimWinnings() internal {
+        try this._executeClaimWinnings() {} catch {
+            emit WinningsClaimFailed();
+        }
+    }
+
+    function _executeClaimWinnings() external {
+        require(msg.sender == address(this), "internal only");
+
+        (, uint256 winningsClaimable,) = megapot.usersInfo(address(this));
+        if (winningsClaimable == 0) return;
+
+        uint256 balanceBefore = usdc.balanceOf(address(this));
+        megapot.withdrawWinnings();
+        uint256 claimed = usdc.balanceOf(address(this)) - balanceBefore;
+
+        reservePool += claimed;
+        emit MegapotWinningsClaimed(claimed);
     }
 
     function _executePurchase(uint256 amount) external {
@@ -213,7 +241,7 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         if (amount > reservePool) revert InsufficientReserve();
 
         reservePool -= amount;
-        usdc.safeTransfer(buybackBurner, amount);
+        usdc.forceApprove(buybackBurner, amount);
         IBuybackBurner(buybackBurner).deposit(amount);
 
         emit TransferredToBuyback(amount);
