@@ -216,10 +216,20 @@ function Dashboard({ address }: { address: string }) {
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const { address, isConnected } = useAccount()
+  const { connect, connectors } = useConnect()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Auto-connect Farcaster wallet when inside Warpcast
+  useEffect(() => {
+    if (!mounted || isConnected) return
+    const fc = connectors.find(c => c.id === 'farcasterMiniApp')
+    if (fc) {
+      connect({ connector: fc })
+    }
+  }, [mounted, isConnected, connectors, connect])
 
   if (!mounted) {
     return <LoadingScreen />
