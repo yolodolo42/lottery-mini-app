@@ -41,6 +41,10 @@ type Tab = 'mine' | 'treasury' | 'about'
 function ConnectScreen() {
   const { connect, connectors } = useConnect()
 
+  // Inside Warpcast: only show Farcaster connector
+  const fcConnector = connectors.find(c => c.id === 'farcasterMiniApp')
+  const visibleConnectors = fcConnector ? [fcConnector] : connectors
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="card max-w-sm w-full">
@@ -67,7 +71,7 @@ function ConnectScreen() {
         </div>
 
         <div className="space-y-3">
-          {connectors.map((connector) => (
+          {visibleConnectors.map((connector) => (
             <button
               key={connector.id}
               onClick={() => connect({ connector })}
