@@ -3,7 +3,8 @@ PROGRESS.md
 .mcp.json
 reports
 .env
-contracts/broadcast/
+contracts/broadcast
+contracts/deployments/megapot-e2e-plan.md
 
 # IDE
 .vscode/
@@ -14,3 +15,4 @@ contracts/broadcast/
 
 CLAUDE.md
 PROGRESS.md
+
