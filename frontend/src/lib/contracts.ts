@@ -1,16 +1,15 @@
 import { Address } from 'viem'
 
-// Base Sepolia testnet contract addresses (v4 - deployed 2026-01-31)
-// Includes 5% premine for LP, BuybackBurner active
+// Base Sepolia testnet contract addresses (v5 - deployed 2026-02-08)
+// Points at real Megapot + MPUSDC on Base Sepolia
 export const ADDRESSES = {
-  USDC: '0x17e0491422685c309bFB6aDAF662c2832b41eF4E' as Address, // MockUSDC
-  MEGAPOT: '0xe7a6A816DD03d71e858D40B952721063ff83B53A' as Address, // MockMegapot
-  LOTTERY_TOKEN: '0x10117dF540d74A9595Fa08F56426bb3C28FF22c9' as Address,
-  LOTTERY_MINER: '0xAFD683F33cBdC83790BCf73eA6D44582eB9d935F' as Address,
-  LOTTERY_TREASURY: '0xDB689D685F34A6335Ae12b042953fC9f9db73003' as Address,
-  MEGAPOT_ROUTER: '0xd820D03ace8E62cAE633Aa5A2a75786BFC65AA8e' as Address,
-  BUYBACK_BURNER: '0x035b0cE12bAA3cF4A32C8AC467f7A70Cb38894Aa' as Address,
-  LP_TOKEN: '0x49b04ED2133e6aA890650542b8C03b5426E844f0' as Address, // LOTTERY-USDC LP on Uniswap V2
+  USDC: '0xA4253E7C13525287C56550b8708100f93E60509f' as Address, // MPUSDC (real Base Sepolia)
+  MEGAPOT: '0x6f03c7BCaDAdBf5E6F5900DA3d56AdD8FbDac5De' as Address, // Real Megapot (Base Sepolia)
+  LOTTERY_TOKEN: '0x01Bfd7F444578Eb6Cd7D9F17DFbCFaa05C72f8df' as Address,
+  LOTTERY_MINER: '0x6D6ac07A791Da43aAdE206b1Af9AFB64330CE1aA' as Address,
+  LOTTERY_TREASURY: '0x8115E7E399cBeFd367D2C42e11D17dD515372b9A' as Address,
+  MEGAPOT_ROUTER: '0x40520D266e75657C0e9A870C0870867EE1Dd476b' as Address,
+  REFERRAL_COLLECTOR: '0xB9E92b004f4bF2E9C22e872a278a5075dFC9B5eE' as Address,
 } as const
 
 // v2: Decay phase constants (matching contract)

@@ -20,6 +20,10 @@ contract DeployAllScript is Script {
     address constant MAINNET_USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
     address constant MAINNET_MEGAPOT = 0xbEDd4F2beBE9E3E636161E644759f3cbe3d51B95;
 
+    // Base Sepolia addresses (real Megapot testnet)
+    address constant SEPOLIA_USDC = 0xA4253E7C13525287C56550b8708100f93E60509f;
+    address constant SEPOLIA_MEGAPOT = 0x6f03c7BCaDAdBf5E6F5900DA3d56AdD8FbDac5De;
+
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
@@ -42,19 +46,29 @@ contract DeployAllScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Step 1: Deploy mocks (testnet only) or use mainnet addresses
+        // Step 1: Resolve USDC and Megapot addresses
         if (isTestnet) {
-            console.log("--- Step 1: Deploying Mocks ---");
-            MockUSDC mockUsdc = new MockUSDC();
-            MockMegapot mockMegapot = new MockMegapot(address(mockUsdc));
-            mockUsdc.mint(deployer, 100_000e6);
+            bool useMocks = vm.envOr("USE_MOCKS", false);
+            if (useMocks) {
+                console.log("--- Step 1: Deploying Mocks ---");
+                MockUSDC mockUsdc = new MockUSDC();
+                MockMegapot mockMegapot = new MockMegapot(address(mockUsdc));
+                mockUsdc.mint(deployer, 100_000e6);
 
-            usdc = address(mockUsdc);
-            megapot = address(mockMegapot);
+                usdc = address(mockUsdc);
+                megapot = address(mockMegapot);
 
-            console.log("MockUSDC:", usdc);
-            console.log("MockMegapot:", megapot);
-            console.log("Minted 100,000 USDC to deployer\n");
+                console.log("MockUSDC:", usdc);
+                console.log("MockMegapot:", megapot);
+                console.log("Minted 100,000 USDC to deployer\n");
+            } else {
+                console.log("--- Step 1: Using Real Base Sepolia Addresses ---");
+                usdc = SEPOLIA_USDC;
+                megapot = SEPOLIA_MEGAPOT;
+                console.log("MPUSDC:", usdc);
+                console.log("Megapot:", megapot);
+                console.log("");
+            }
         } else {
             console.log("--- Step 1: Using Mainnet Addresses ---");
             usdc = MAINNET_USDC;
@@ -139,10 +153,8 @@ contract DeployAllScript is Script {
         console.log("========================================");
         console.log("         DEPLOYMENT COMPLETE            ");
         console.log("========================================");
-        if (isTestnet) {
-            console.log("MockUSDC:          ", usdc);
-            console.log("MockMegapot:       ", megapot);
-        }
+        console.log("USDC:              ", usdc);
+        console.log("Megapot:           ", megapot);
         console.log("LotteryToken:      ", address(token));
         console.log("LotteryTreasury:   ", address(treasury));
         console.log("LotteryMiner:      ", address(miner));
