@@ -11,6 +11,8 @@ contract MegapotRouter {
     using SafeERC20 for IERC20;
 
     uint256 private constant TICKET_PRICE = 1e6; // 1 USDC per ticket
+    bytes4 private constant PURCHASE_TICKETS_SELECTOR =
+        bytes4(keccak256("purchaseTickets(address,uint256,address)"));
 
     IERC20 public immutable usdc;
     IMegapot public immutable megapot;
@@ -36,8 +38,13 @@ contract MegapotRouter {
         usdc.safeTransferFrom(msg.sender, address(this), value);
         usdc.forceApprove(address(megapot), value);
 
-        bool success = megapot.purchaseTickets(referralCollector, value, recipient);
-        if (!success) revert MegapotPurchaseFailed();
+        // Tolerate Megapot implementations that either return (bool) or return nothing.
+        (bool ok, bytes memory ret) = address(megapot).call(
+            abi.encodeWithSelector(PURCHASE_TICKETS_SELECTOR, referralCollector, value, recipient)
+        );
+        if (!ok) revert MegapotPurchaseFailed();
+        if (ret.length == 32 && !abi.decode(ret, (bool))) revert MegapotPurchaseFailed();
+        if (ret.length != 0 && ret.length != 32) revert MegapotPurchaseFailed();
 
         return value / TICKET_PRICE;
     }

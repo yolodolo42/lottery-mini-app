@@ -9,7 +9,6 @@ export const ADDRESSES = {
   LOTTERY_MINER: '0xAFD683F33cBdC83790BCf73eA6D44582eB9d935F' as Address,
   LOTTERY_TREASURY: '0xDB689D685F34A6335Ae12b042953fC9f9db73003' as Address,
   MEGAPOT_ROUTER: '0xd820D03ace8E62cAE633Aa5A2a75786BFC65AA8e' as Address,
-  REFERRAL_COLLECTOR: '0x7987dEbcA51e70e702f969046D8115540c59ff4B' as Address,
   BUYBACK_BURNER: '0x035b0cE12bAA3cF4A32C8AC467f7A70Cb38894Aa' as Address,
   LP_TOKEN: '0x49b04ED2133e6aA890650542b8C03b5426E844f0' as Address, // LOTTERY-USDC LP on Uniswap V2
 } as const
@@ -254,30 +253,6 @@ export const LOTTERY_TREASURY_ABI = [
   },
 ] as const
 
-// v2: ReferralCollector ABI
-export const REFERRAL_COLLECTOR_ABI = [
-  {
-    name: 'harvest',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [],
-    outputs: [],
-  },
-  {
-    name: 'pendingFees',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-  },
-  {
-    name: 'KING_BPS',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-  },
-] as const
 
 // Phase 4: BuybackBurner ABI
 export const BUYBACK_BURNER_ABI = [

@@ -28,6 +28,7 @@ contract MockMegapot {
     uint256 public totalTicketsPurchased;
     uint256 public currentDrawingId;
     bool public shouldFail;
+    bool public shouldRevertWithdraw;
 
     // v2: Referral fee tracking
     mapping(address => uint256) public referralFeesClaimable;
@@ -40,6 +41,10 @@ contract MockMegapot {
 
     function setShouldFail(bool _shouldFail) external {
         shouldFail = _shouldFail;
+    }
+
+    function setShouldRevertWithdraw(bool _shouldRevertWithdraw) external {
+        shouldRevertWithdraw = _shouldRevertWithdraw;
     }
 
     function purchaseTickets(address referrer, uint256 value, address) external returns (bool) {
@@ -55,11 +60,13 @@ contract MockMegapot {
         return true;
     }
 
-    // v2: Withdraw referral fees
-    function withdrawReferralFees() external {
+    // v2: Withdraw referral fees (plural to match real deployed Megapot)
+    function withdrawReferralFees() external returns (bool) {
+        if (shouldRevertWithdraw) revert("withdraw failed");
         uint256 amount = referralFeesClaimable[msg.sender];
         referralFeesClaimable[msg.sender] = 0;
         usdc.transfer(msg.sender, amount);
+        return true;
     }
 }
 
@@ -1263,7 +1270,7 @@ contract LotteryTest is Test {
         assertEq(usdc.balanceOf(address(megapot)) - megapotBefore, 100e6);
     }
 
-    function test_Collector_HarvestWithKing() public {
+    function test_Collector_HarvestViaClaimEmissions() public {
         // Deploy Phase 2 contracts
         ReferralCollector collector = new ReferralCollector(
             address(usdc),
@@ -1277,6 +1284,12 @@ contract LotteryTest is Test {
             address(collector)
         );
 
+        // Configure treasury to use router
+        vm.prank(owner);
+        treasury.setMegapotRouter(address(router));
+        vm.prank(owner);
+        treasury.setMegapotBps(0);
+
         // Alice becomes King first
         _mineAs(alice, 100e6);
         assertEq(miner.king(), alice);
@@ -1287,20 +1300,36 @@ contract LotteryTest is Test {
         router.purchaseTickets(1000e6, address(0));
 
         // Fees accumulated: 100 USDC (10% of 1000)
-        assertEq(collector.pendingFees(), 100e6);
+        assertEq(megapot.referralFeesClaimable(address(collector)), 100e6);
 
         uint256 aliceBalanceBefore = usdc.balanceOf(alice);
         uint256 treasuryBalanceBefore = usdc.balanceOf(address(treasury));
 
-        // Anyone can harvest
-        collector.harvest();
+        // Harvest triggered automatically via claimEmissions
+        vm.warp(block.timestamp + 1 hours);
+        vm.prank(alice);
+        miner.claimEmissions();
 
         // 50% to King (Alice), 50% to Treasury
         assertEq(usdc.balanceOf(alice) - aliceBalanceBefore, 50e6);
         assertEq(usdc.balanceOf(address(treasury)) - treasuryBalanceBefore, 50e6);
     }
 
-    function test_Collector_HarvestNoKing_AllToTreasury() public {
+    function test_Collector_OnlyMinerCanHarvest() public {
+        ReferralCollector collector = new ReferralCollector(
+            address(usdc),
+            address(megapot),
+            address(miner),
+            address(treasury)
+        );
+
+        // Non-miner cannot call harvestIfNeededFor
+        vm.prank(alice);
+        vm.expectRevert(ReferralCollector.OnlyMiner.selector);
+        collector.harvestIfNeededFor(alice);
+    }
+
+    function test_Collector_NoFeesDoesNotRevert() public {
         ReferralCollector collector = new ReferralCollector(
             address(usdc),
             address(megapot),
@@ -1313,58 +1342,17 @@ contract LotteryTest is Test {
             address(collector)
         );
 
-        // No King yet (king == address(0))
-        assertEq(miner.king(), address(0));
+        // Configure treasury to use router
+        vm.prank(owner);
+        treasury.setMegapotRouter(address(router));
+        vm.prank(owner);
+        treasury.setMegapotBps(0);
 
-        // Purchase to create referral fees
-        usdc.mint(address(this), 1000e6);
-        usdc.approve(address(router), 1000e6);
-        router.purchaseTickets(1000e6, address(0));
-
-        uint256 treasuryBalanceBefore = usdc.balanceOf(address(treasury));
-
-        // Harvest - all goes to treasury since no king
-        collector.harvest();
-
-        // 100% to Treasury
-        assertEq(usdc.balanceOf(address(treasury)) - treasuryBalanceBefore, 100e6);
-    }
-
-    function test_Collector_RevertsNothingToHarvest() public {
-        ReferralCollector collector = new ReferralCollector(
-            address(usdc),
-            address(megapot),
-            address(miner),
-            address(treasury)
-        );
-
-        // No fees accumulated
-        assertEq(collector.pendingFees(), 0);
-
-        vm.expectRevert(ReferralCollector.NothingToHarvest.selector);
-        collector.harvest();
-    }
-
-    function test_Collector_PendingFeesView() public {
-        ReferralCollector collector = new ReferralCollector(
-            address(usdc),
-            address(megapot),
-            address(miner),
-            address(treasury)
-        );
-        MegapotRouter router = new MegapotRouter(
-            address(usdc),
-            address(megapot),
-            address(collector)
-        );
-
-        assertEq(collector.pendingFees(), 0);
-
-        usdc.mint(address(this), 500e6);
-        usdc.approve(address(router), 500e6);
-        router.purchaseTickets(500e6, address(0));
-
-        assertEq(collector.pendingFees(), 50e6); // 10% of 500
+        // No fees accumulated, but claimEmissions should not revert
+        _mineAs(alice, 100e6);
+        vm.warp(block.timestamp + 1 hours);
+        vm.prank(alice);
+        miner.claimEmissions(); // Should succeed silently
     }
 
     function test_Treasury_UsesRouterWhenSet() public {
@@ -1425,6 +1413,109 @@ contract LotteryTest is Test {
         vm.prank(owner);
         vm.expectRevert(LotteryTreasury.RouterAlreadySet.selector);
         treasury.setMegapotRouter(address(router2));
+    }
+
+    // ============ Dethrone Referral Attribution Tests ============
+
+    function test_Dethrone_HarvestInMine_PaysPrevKing() public {
+        ReferralCollector collector = new ReferralCollector(
+            address(usdc),
+            address(megapot),
+            address(miner),
+            address(treasury)
+        );
+        MegapotRouter router = new MegapotRouter(
+            address(usdc),
+            address(megapot),
+            address(collector)
+        );
+
+        // Configure treasury to use router and disable auto Megapot purchases during deposits for determinism.
+        vm.prank(owner);
+        treasury.setMegapotRouter(address(router));
+        vm.prank(owner);
+        treasury.setMegapotBps(0);
+
+        // Alice becomes king.
+        _mineAs(alice, 100e6);
+
+        // Generate referral fees while Alice is king.
+        usdc.mint(address(this), 1000e6);
+        usdc.approve(address(router), 1000e6);
+        router.purchaseTickets(1000e6, address(0));
+        assertEq(megapot.referralFeesClaimable(address(collector)), 100e6);
+
+        uint256 aliceBalanceBefore = usdc.balanceOf(alice);
+
+        // Bob dethrones Alice. mine() should harvest referral fees to the dethroned king (Alice).
+        _mineAs(bob, 200e6);
+
+        uint256 prevKingAmount = (200e6 * 8000) / 10000; // immediate takeover payout phase = 80%
+        uint256 referralShare = 50e6; // 50% of 100 USDC fees
+        assertEq(usdc.balanceOf(alice) - aliceBalanceBefore, prevKingAmount + referralShare);
+        assertEq(megapot.referralFeesClaimable(address(collector)), 0);
+        assertEq(miner.king(), bob);
+    }
+
+    function test_Dethrone_NoFees_DoesNotRevert() public {
+        ReferralCollector collector = new ReferralCollector(
+            address(usdc),
+            address(megapot),
+            address(miner),
+            address(treasury)
+        );
+        MegapotRouter router = new MegapotRouter(
+            address(usdc),
+            address(megapot),
+            address(collector)
+        );
+
+        vm.prank(owner);
+        treasury.setMegapotRouter(address(router));
+        vm.prank(owner);
+        treasury.setMegapotBps(0);
+
+        _mineAs(alice, 100e6);
+        _mineAs(bob, 200e6);
+        assertEq(miner.king(), bob);
+    }
+
+    function test_Dethrone_MegapotWithdrawReverts_MineStillSucceeds() public {
+        ReferralCollector collector = new ReferralCollector(
+            address(usdc),
+            address(megapot),
+            address(miner),
+            address(treasury)
+        );
+        MegapotRouter router = new MegapotRouter(
+            address(usdc),
+            address(megapot),
+            address(collector)
+        );
+
+        vm.prank(owner);
+        treasury.setMegapotRouter(address(router));
+        vm.prank(owner);
+        treasury.setMegapotBps(0);
+
+        _mineAs(alice, 100e6);
+
+        // Generate referral fees, then make withdrawals revert.
+        usdc.mint(address(this), 1000e6);
+        usdc.approve(address(router), 1000e6);
+        router.purchaseTickets(1000e6, address(0));
+        assertEq(megapot.referralFeesClaimable(address(collector)), 100e6);
+
+        megapot.setShouldRevertWithdraw(true);
+
+        uint256 aliceBalanceBefore = usdc.balanceOf(alice);
+        _mineAs(bob, 200e6);
+
+        // Alice still gets dethrone payout, but referral fees remain unharvested.
+        uint256 prevKingAmount = (200e6 * 8000) / 10000;
+        assertEq(usdc.balanceOf(alice) - aliceBalanceBefore, prevKingAmount);
+        assertEq(megapot.referralFeesClaimable(address(collector)), 100e6);
+        assertEq(miner.king(), bob);
     }
 
     // ============ Security Fix Tests ============

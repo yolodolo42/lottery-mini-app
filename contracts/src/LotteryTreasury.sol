@@ -19,6 +19,8 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
     // Immutables
     IERC20 public immutable usdc;
     IMegapot public immutable megapot;
+    bytes4 private constant PURCHASE_TICKETS_SELECTOR =
+        bytes4(keccak256("purchaseTickets(address,uint256,address)"));
 
     // State
     address public miner;
@@ -26,14 +28,14 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
     uint256 public megapotPool;
     uint256 public reservePool;
     uint256 public totalTicketsPurchased;
-    mapping(uint256 => uint256) public ticketsByRound;
     address public governance;
     address public megapotRouter;
     address public buybackBurner;
 
     // Events
     event Deposit(uint256 amount, uint256 toMegapot, uint256 toReserve);
-    event TicketsPurchased(uint256 indexed drawingId, uint256 amount, uint256 tickets);
+    event TicketsPurchased(uint256 amount, uint256 tickets);
+    event MegapotWinningsClaimed(uint256 amount);
     event TicketPurchaseFailed(uint256 amount);
     event MegapotBpsUpdated(uint256 oldBps, uint256 newBps);
     event Withdrawn(address indexed to, uint256 amount);
@@ -55,6 +57,7 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
     error RouterAlreadySet();
     error BuybackBurnerAlreadySet();
     error NothingToRescue();
+    error NothingToClaim();
 
     modifier onlyMiner() {
         if (miner == address(0)) revert MinerNotSet();
@@ -116,20 +119,12 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         uint256 amount = megapotPool;
         if (amount == 0) return;
 
-        uint256 drawingId;
-        try megapot.currentDrawingId() returns (uint256 id) {
-            drawingId = id;
-        } catch {
-            emit TicketPurchaseFailed(amount);
-            return;
-        }
-
-        try this._executePurchase(amount, drawingId) {} catch {
+        try this._executePurchase(amount) {} catch {
             emit TicketPurchaseFailed(amount);
         }
     }
 
-    function _executePurchase(uint256 amount, uint256 drawingId) external {
+    function _executePurchase(uint256 amount) external {
         require(msg.sender == address(this), "internal only");
 
         megapotPool = 0;
@@ -140,14 +135,18 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
             IMegapotRouter(megapotRouter).purchaseTickets(amount, address(0));
         } else {
             usdc.forceApprove(address(megapot), amount);
-            megapot.purchaseTickets(address(0), amount, address(0));
+            (bool ok, bytes memory ret) = address(megapot).call(
+                abi.encodeWithSelector(PURCHASE_TICKETS_SELECTOR, address(0), amount, address(0))
+            );
+            require(ok, "Megapot purchase failed");
+            require(ret.length == 0 || ret.length == 32, "Megapot bad return");
+            if (ret.length == 32) require(abi.decode(ret, (bool)), "Megapot purchase false");
         }
 
         uint256 ticketCount = amount / 1e6;
-        ticketsByRound[drawingId] += ticketCount;
         totalTicketsPurchased += ticketCount;
 
-        emit TicketsPurchased(drawingId, amount, ticketCount);
+        emit TicketsPurchased(amount, ticketCount);
     }
 
     /// @notice Owner: update megapot percentage
@@ -218,6 +217,22 @@ contract LotteryTreasury is Ownable2Step, ReentrancyGuard {
         IBuybackBurner(buybackBurner).deposit(amount);
 
         emit TransferredToBuyback(amount);
+    }
+
+    /// @notice Governance: claim Megapot jackpot winnings into reserve pool
+    function claimMegapotWinnings() external nonReentrant {
+        if (governance == address(0)) revert GovernanceNotSet();
+        if (msg.sender != governance) revert OnlyGovernance();
+
+        (, uint256 winningsClaimable,) = megapot.usersInfo(address(this));
+        if (winningsClaimable == 0) revert NothingToClaim();
+
+        uint256 balanceBefore = usdc.balanceOf(address(this));
+        megapot.withdrawWinnings();
+        uint256 claimed = usdc.balanceOf(address(this)) - balanceBefore;
+
+        reservePool += claimed;
+        emit MegapotWinningsClaimed(claimed);
     }
 
     /// @notice View: get pool balances

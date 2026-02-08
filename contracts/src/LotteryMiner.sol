@@ -12,6 +12,16 @@ interface ILotteryToken {
 
 interface ILotteryTreasury {
     function deposit(uint256 amount) external;
+    function megapotRouter() external view returns (address);
+}
+
+// Minimal interfaces for the referral-fee dethrone fix.
+interface IMegapotRouterLike {
+    function referralCollector() external view returns (address);
+}
+
+interface IReferralCollectorLike {
+    function harvestIfNeededFor(address kingRecipient) external;
 }
 
 contract LotteryMiner is ReentrancyGuard, Pausable {
@@ -148,6 +158,11 @@ contract LotteryMiner is ReentrancyGuard, Pausable {
         // Transfer USDC from bidder
         usdc.safeTransferFrom(msg.sender, address(this), bidAmount);
 
+        // Best-effort: harvest Megapot referral fees for the dethroned king
+        if (prevKing != address(0)) {
+            _tryHarvestFor(prevKing);
+        }
+
         // Settle previous king
         if (prevKing != address(0)) {
             if (prevKingEmissions > 0) {
@@ -178,6 +193,20 @@ contract LotteryMiner is ReentrancyGuard, Pausable {
         lotteryToken.mint(king, emissions);
 
         emit EmissionsClaimed(king, emissions);
+
+        // Best-effort: harvest Megapot referral fees for current king
+        _tryHarvestFor(king);
+    }
+
+    /// @dev Best-effort harvest of Megapot referral fees. Fails silently to avoid DoS.
+    function _tryHarvestFor(address recipient) internal {
+        address router = treasury.megapotRouter();
+        if (router == address(0)) return;
+        try IMegapotRouterLike(router).referralCollector() returns (address collector) {
+            if (collector != address(0)) {
+                try IReferralCollectorLike(collector).harvestIfNeededFor(recipient) {} catch {}
+            }
+        } catch {}
     }
 
     function _calculateEmissions() internal view returns (uint256) {
