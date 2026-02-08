@@ -26,8 +26,9 @@ interface ILotteryToken {
 /// @notice Creates LOTTERY-USDC LP pair and initializes liquidity
 /// @dev Usage: forge script script/CreateLP.s.sol:CreateLPScript --rpc-url $RPC --broadcast
 contract CreateLPScript is Script {
-    // Uniswap V2 Factory on Base Sepolia (from Base docs)
-    address constant UNISWAP_V2_FACTORY = 0x7Ae58f10f7849cA6F5fB71b7f45CB416c9204b1e;
+    // Uniswap V2 Factory addresses
+    address constant UNISWAP_V2_FACTORY_MAINNET = 0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6;
+    address constant UNISWAP_V2_FACTORY_SEPOLIA = 0x7Ae58f10f7849cA6F5fB71b7f45CB416c9204b1e;
 
     // USDC amount for LP (1000 USDC with 6 decimals)
     uint256 constant USDC_AMOUNT = 1000e6;
@@ -52,7 +53,9 @@ contract CreateLPScript is Script {
 
         // Step 1: Create pair
         console.log("--- Step 1: Creating Uniswap V2 Pair ---");
-        IUniswapV2Factory factory = IUniswapV2Factory(UNISWAP_V2_FACTORY);
+        address factoryAddr = block.chainid == 8453 ? UNISWAP_V2_FACTORY_MAINNET : UNISWAP_V2_FACTORY_SEPOLIA;
+        console.log("Factory:", factoryAddr);
+        IUniswapV2Factory factory = IUniswapV2Factory(factoryAddr);
 
         address pair = factory.getPair(lottery, usdc);
         if (pair == address(0)) {
