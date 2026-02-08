@@ -90,7 +90,7 @@ The $LOTTERY token has ERC20Votes built in, but no governance contracts are depl
 ## Security
 
 ### Has the code been audited?
-Slither analysis completed with no critical issues. Full test coverage with invariant fuzzing (108/108 tests passing).
+Audited with no critical issues. 131 tests passing (unit + fork + invariant fuzzing).
 
 ### Can the creator steal funds?
 No. Creator can only:

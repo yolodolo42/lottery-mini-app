@@ -1,16 +1,12 @@
 # $LOTTERY - System Architecture
 
-## Overview
-
-A Farcaster Mini App on Base where users bid USDC to become "King" and earn $LOTTERY tokens. The system generates revenue through Megapot lottery ticket purchases and referral fees.
-
----
+Farcaster Mini App on Base. Users bid USDC to become King, earn $LOTTERY tokens, and generate USDC yield through Megapot referral fees.
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                     $LOTTERY SYSTEM (v2)                      │
+│                       $LOTTERY SYSTEM                         │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌─────────────┐    ┌──────────────────┐    ┌────────────┐  │
@@ -105,8 +101,4 @@ Dutch auction selling USDC for LOTTERY-USDC LP tokens, then burns them to 0xdead
 3. Megapot accumulates 10% referral fees
 4. On mine()/claimEmissions(), fees auto-harvested (50% King, 50% Treasury)
 
----
-
-## Deployed Addresses
-
-See [README.md](README.md) for Base mainnet contract addresses.
+Deployed on Base mainnet. See [README.md](README.md) for addresses.
