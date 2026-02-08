@@ -85,10 +85,10 @@ export function About() {
 
       {/* Links */}
       <div className="card">
-        <h3 className="font-semibold mb-3 text-primary">Contracts</h3>
+        <h3 className="font-semibold mb-3 text-primary">Contracts (Base)</h3>
         <div className="space-y-2">
           <a
-            href="https://sepolia.basescan.org/address/0x757f0cbBb7be9aaaEdFAB04632e4293BB4e0a73E"
+            href="https://basescan.org/address/0xd1DA10c6179693F05d15D420f5FE49405Da8a52B"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between text-sm text-secondary hover:text-primary transition-colors font-mono"
@@ -97,7 +97,7 @@ export function About() {
             <span>→</span>
           </a>
           <a
-            href="https://sepolia.basescan.org/address/0x329fDa672F359c8422a790Df4e2BEBd96453C096"
+            href="https://basescan.org/address/0x07911ee281161f498Ae86acBad93F397ba35E0D3"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between text-sm text-secondary hover:text-primary transition-colors font-mono"
@@ -106,12 +106,21 @@ export function About() {
             <span>→</span>
           </a>
           <a
-            href="https://sepolia.basescan.org/address/0x1E389cf75155E34A8901388a70c4c1B1d94e0333"
+            href="https://basescan.org/address/0xa680443Bc34E65D1fBaA0BF47ebEc5EF4f370E04"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between text-sm text-secondary hover:text-primary transition-colors font-mono"
           >
             <span>Treasury</span>
+            <span>→</span>
+          </a>
+          <a
+            href="https://basescan.org/address/0x6e6Da38161E0d345d82C4F3aFC370087bF8F2a23"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex justify-between text-sm text-secondary hover:text-primary transition-colors font-mono"
+          >
+            <span>LP Pair</span>
             <span>→</span>
           </a>
         </div>
@@ -120,7 +129,7 @@ export function About() {
       {/* Footer */}
       <div className="text-center pt-4">
         <p className="text-xs text-muted font-mono">
-          EST. 2026 • FARCASTER • BASE SEPOLIA
+          EST. 2026 • FARCASTER • BASE
         </p>
       </div>
     </div>
