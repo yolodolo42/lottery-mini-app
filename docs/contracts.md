@@ -2,22 +2,19 @@
 
 ## Contract Addresses
 
-### Base Sepolia (Testnet)
+### Base Mainnet
 
 | Contract | Address |
 |----------|---------|
-| LotteryToken | `0x10117dF540d74A9595Fa08F56426bb3C28FF22c9` |
-| LotteryMiner | `0xAFD683F33cBdC83790BCf73eA6D44582eB9d935F` |
-| LotteryTreasury | `0xDB689D685F34A6335Ae12b042953fC9f9db73003` |
-| BuybackBurner | `0x035b0cE12bAA3cF4A32C8AC467f7A70Cb38894Aa` |
-| MegapotRouter | `0xd820D03ace8E62cAE633Aa5A2a75786BFC65AA8e` |
-| ReferralCollector | `0x7987dEbcA51e70e702f969046D8115540c59ff4B` |
-| LP Pair | `0x49b04ED2133e6aA890650542b8C03b5426E844f0` |
-| MockUSDC | `0x17e0491422685c309bFB6aDAF662c2832b41eF4E` |
-
-### Base Mainnet
-
-*Not yet deployed.*
+| LotteryToken | [`0x07911ee281161f498Ae86acBad93F397ba35E0D3`](https://basescan.org/address/0x07911ee281161f498Ae86acBad93F397ba35E0D3) |
+| LotteryMiner | [`0xd1DA10c6179693F05d15D420f5FE49405Da8a52B`](https://basescan.org/address/0xd1DA10c6179693F05d15D420f5FE49405Da8a52B) |
+| LotteryTreasury | [`0xa680443Bc34E65D1fBaA0BF47ebEc5EF4f370E04`](https://basescan.org/address/0xa680443Bc34E65D1fBaA0BF47ebEc5EF4f370E04) |
+| MegapotRouter | [`0xDD577b9663fCb8235e9476DCc1A3C2E6CC8c9d87`](https://basescan.org/address/0xDD577b9663fCb8235e9476DCc1A3C2E6CC8c9d87) |
+| ReferralCollector | [`0x45C666A3f7bCE2CF5c346422b0d46EC50987A062`](https://basescan.org/address/0x45C666A3f7bCE2CF5c346422b0d46EC50987A062) |
+| BuybackBurner | [`0x341f4295Cec19950D3ba441Dc4C45bD06d13AB5d`](https://basescan.org/address/0x341f4295Cec19950D3ba441Dc4C45bD06d13AB5d) |
+| LP Pair | [`0x6e6Da38161E0d345d82C4F3aFC370087bF8F2a23`](https://basescan.org/address/0x6e6Da38161E0d345d82C4F3aFC370087bF8F2a23) |
+| USDC | [`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`](https://basescan.org/address/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) |
+| Megapot | [`0xbEDd4F2beBE9E3E636161E644759f3cbe3d51B95`](https://basescan.org/address/0xbEDd4F2beBE9E3E636161E644759f3cbe3d51B95) |
 
 ## Contract Overview
 
@@ -59,7 +56,7 @@ Referral fee capture:
 Referral fee distribution:
 - Collects Megapot referral fees
 - Splits 50/50 between current King (USDC) and treasury
-- `harvest()` is permissionless. Anyone can trigger distribution.
+- Auto-harvested on mine() and claimEmissions() via LotteryMiner.
 - If no King, 100% goes to treasury
 
 ### BuybackBurner
@@ -72,8 +69,8 @@ LP buyback and burn:
 ## Security
 
 ### Audits
-- **Slither:** No critical issues found
-- **Test coverage:** 108/108 tests passing
+- **Audit:** No critical/high issues found
+- **Test coverage:** 131 tests passing (unit + fork)
 - **Invariant fuzzing:** Included in test suite
 
 ### Security Features

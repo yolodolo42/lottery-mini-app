@@ -1,17 +1,17 @@
 {
   "accountAssociation": {
-    "header": "GENERATE_AT_WARPCAST_MANIFEST_TOOL",
-    "payload": "GENERATE_AT_WARPCAST_MANIFEST_TOOL",
-    "signature": "GENERATE_AT_WARPCAST_MANIFEST_TOOL"
+    "header": "eyJmaWQiOjE5MzQyMDMsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg4NDQzYTNlYTcxQWE0MjYyM0IxNUQxOTg2ODZlM0FDNTEzNmVCQzc4In0",
+    "payload": "eyJkb21haW4iOiJmcm9udGVuZC15b2xvZG9sb3MtcHJvamVjdHMudmVyY2VsLmFwcCJ9",
+    "signature": "rSbnBC8aF63ehHcWwuetBtOhyV8FNrtL9wwnC6mXtVI7GUvlZOC7CnFgnrxmxIuk7eAGw3fwf5aYjvahRmaPRxw="
   },
   "frame": {
     "version": "1",
     "name": "$LOTTERY",
-    "iconUrl": "https://frontend-dpe2a6vt0-yolodolos-projects.vercel.app/icon.png",
-    "homeUrl": "https://frontend-dpe2a6vt0-yolodolos-projects.vercel.app",
-    "imageUrl": "https://frontend-dpe2a6vt0-yolodolos-projects.vercel.app/og-image.png",
+    "iconUrl": "https://frontend-yolodolos-projects.vercel.app/icon.png",
+    "homeUrl": "https://frontend-yolodolos-projects.vercel.app",
+    "imageUrl": "https://frontend-yolodolos-projects.vercel.app/og-image.png",
     "buttonTitle": "Play $LOTTERY",
-    "splashImageUrl": "https://frontend-dpe2a6vt0-yolodolos-projects.vercel.app/splash.png",
+    "splashImageUrl": "https://frontend-yolodolos-projects.vercel.app/splash.png",
     "splashBackgroundColor": "#1a1a1a"
   }
 }

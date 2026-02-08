@@ -17,15 +17,17 @@ King-of-the-Hill DeFi game where users bid USDC to become King and earn $LOTTERY
 
 ---
 
-## Deployed Addresses (Base Sepolia)
-
-See: `deployments/addresses/base-sepolia.json`
+## Deployed Addresses (Base Mainnet)
 
 | Contract | Address |
 |----------|---------|
-| LotteryMiner | `0x757f0cbBb7be9aaaEdFAB04632e4293BB4e0a73E` |
-| LotteryToken | `0x329fDa672F359c8422a790Df4e2BEBd96453C096` |
-| LotteryTreasury | `0x1E389cf75155E34A8901388a70c4c1B1d94e0333` |
+| LotteryToken | [`0x07911ee281161f498Ae86acBad93F397ba35E0D3`](https://basescan.org/address/0x07911ee281161f498Ae86acBad93F397ba35E0D3) |
+| LotteryMiner | [`0xd1DA10c6179693F05d15D420f5FE49405Da8a52B`](https://basescan.org/address/0xd1DA10c6179693F05d15D420f5FE49405Da8a52B) |
+| LotteryTreasury | [`0xa680443Bc34E65D1fBaA0BF47ebEc5EF4f370E04`](https://basescan.org/address/0xa680443Bc34E65D1fBaA0BF47ebEc5EF4f370E04) |
+| MegapotRouter | [`0xDD577b9663fCb8235e9476DCc1A3C2E6CC8c9d87`](https://basescan.org/address/0xDD577b9663fCb8235e9476DCc1A3C2E6CC8c9d87) |
+| ReferralCollector | [`0x45C666A3f7bCE2CF5c346422b0d46EC50987A062`](https://basescan.org/address/0x45C666A3f7bCE2CF5c346422b0d46EC50987A062) |
+| BuybackBurner | [`0x341f4295Cec19950D3ba441Dc4C45bD06d13AB5d`](https://basescan.org/address/0x341f4295Cec19950D3ba441Dc4C45bD06d13AB5d) |
+| LP Pair | [`0x6e6Da38161E0d345d82C4F3aFC370087bF8F2a23`](https://basescan.org/address/0x6e6Da38161E0d345d82C4F3aFC370087bF8F2a23) |
 
 ---
 
@@ -36,16 +38,16 @@ See: `deployments/addresses/base-sepolia.json`
 forge build
 ```
 
-### Test (108 tests)
+### Test (131 tests)
 ```bash
 forge test -vv
 ```
 
-### Deploy to Testnet
+### Deploy
 ```bash
 source ../.env
-TESTNET=true forge script deployments/DeployAll.s.sol:DeployAllScript \
-  --rpc-url https://sepolia.base.org --broadcast
+forge script deployments/DeployAll.s.sol:DeployAllScript \
+  --rpc-url $BASE_RPC_URL --broadcast
 ```
 
 See `deployments/README.md` for individual contract deployment.

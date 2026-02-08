@@ -7,117 +7,108 @@
 | Name | LOTTERY |
 | Symbol | $LOTTERY |
 | Chain | Base |
-| Standard | ERC-20 |
-| Initial Supply | 0 |
-| Max Supply | Unlimited (inflationary) |
+| Standard | ERC-20 (with ERC20Votes) |
+| Max Supply | 100,000,000 (100M) |
+| LP Premine | 5,000,000 (5%) |
+| Emission Supply | 95,000,000 (95%) |
 
 ---
 
 ## Emission Schedule
 
-### Constant Emission Model
+### Constant Emission with Hard Cap
 
 ```
-Rate: 1 $LOTTERY per second (forever)
-
-Daily:    86,400 tokens
-Weekly:   604,800 tokens
-Monthly:  ~2,592,000 tokens
-Yearly:   ~31,536,000 tokens
+Rate: 1 $LOTTERY per second (while King exists)
+Max per reign: 7 days (604,800 tokens)
+Hard cap: 100M total supply
 ```
 
-### Why Constant Emission?
+| Period | Tokens | Cumulative |
+|--------|--------|------------|
+| Day 1 | 86,400 | 86,400 |
+| Week 1 | 604,800 | 604,800 |
+| Month 1 | ~2.6M | ~2.6M |
+| Year 1 | ~31.5M | ~31.5M |
+| Cap reached | ~3 years | 100M |
 
-| Halving Model | Constant Model |
-|---------------|----------------|
-| Front-loads rewards to early miners | Even distribution over time |
-| Creates artificial scarcity | Value from utility, not scarcity |
-| Treasury revenue declines over time | Treasury revenue stable forever |
-| Complex tokenomics | Simple and predictable |
-
-For a lottery-focused token, **sustained treasury revenue** matters more than artificial scarcity.
+Emissions stop permanently when totalSupply hits 100M.
 
 ---
 
-## Mining Mechanism: The "King" Game
+## Token Distribution
+
+| Allocation | Amount | Purpose |
+|------------|--------|---------|
+| LP Premine | 5M (5%) | Initial LOTTERY-USDC liquidity |
+| King Emissions | 95M (95%) | Earned by Kings at 1/sec |
+
+No team allocation. No VC allocation. No airdrop. 100% goes to LP and players.
+
+### Initial LP
+
+- 5,000,000 LOTTERY + 1,000 USDC
+- Initial price: $0.0002 per LOTTERY
+- LP tokens held by deployer
+
+---
+
+## Mining: The King Game
 
 ### How It Works
 
-1. **Dutch Auction Price**
-   - Price starts at 2× the last winning bid
-   - Price decays linearly to 0 over 1 hour
-   - Anyone can bid at or above current price
+1. **Bid USDC** at or above the current price to become King
+2. **Earn 1 $LOTTERY/sec** while you're King (max 7 days)
+3. **Get outbid?** Receive 20-80% of the new bid + accumulated LOTTERY + referral fees
 
-2. **Becoming King**
-   - Pay USDC at current price
-   - Become the "Lottery King"
-   - Start earning 1 $LOTTERY per second
-
-3. **Staying King**
-   - Earn emissions until someone outbids you
-   - Receive 80% of the next bid as profit
-   - Claim accumulated $LOTTERY anytime
-
-### Example Flow
-
-```
-Hour 0:
-├── Alice bids 100 USDC (first bid, no minimum)
-├── Fee split: 80 USDC → treasury*, 5 USDC → creator, 15 USDC → treasury
-├── Alice becomes King
-└── Alice starts earning 1 $LOTTERY/second
-
-* First bid has no previous king, so 80% goes to treasury
-
-Hour 2:
-├── Bob bids 150 USDC
-├── Fee split: 120 USDC → Alice, 7.5 USDC → creator, 22.5 USDC → treasury
-├── Bob becomes King
-├── Alice earned: 2 hours × 3600 sec = 7,200 $LOTTERY
-└── Alice profit: 120 - 100 = +20 USDC + 7,200 tokens
-
-Hour 3 (no bids):
-├── Price decayed to 0
-├── Bob still King, still earning
-└── Anyone can bid minimum (10% above last = 165 USDC)
-```
-
----
-
-## Fee Distribution
-
-### On Each Mining Bid
+### Fee Split (per bid)
 
 ```
 USDC Bid
     │
-    ├── 80% → Previous King (reward for playing)
+    ├── 20-80% → Previous King (time-decaying)
     │
-    ├── 5%  → Creator (hardcoded, immutable)
+    ├── 5% → Creator (fixed, immutable)
     │
-    └── 15% → Treasury
-              ├── 10% → Megapot tickets (auto, configurable)
-              └── 5%  → Reserve (owner-controlled)
+    └── 15-75% → Treasury (residual)
+                  ├── ~67% → Megapot tickets (auto-purchased)
+                  └── ~33% → Reserve pool
 ```
 
-### Fee Recipients
+### King Income Streams
 
-| Recipient | Share | Purpose |
-|-----------|-------|---------|
-| Previous King | 80% | Incentivizes participation, creates competitive game |
-| Creator | 5% | Sustainable revenue for protocol creator |
-| Megapot | 10% | Auto-buys lottery tickets (configurable 0-15%) |
-| Reserve | 5% | Future use: buybacks, distributions, ops |
+| Stream | Source | When |
+|--------|--------|------|
+| USDC payout | New bidder's USDC | On dethrone |
+| $LOTTERY emissions | Token minting | On dethrone or claimEmissions() |
+| Referral fees (50%) | Megapot referral program | Auto-harvested on dethrone/claim |
 
-### Edge Cases
+---
 
-**First Bid (No Previous King):**
-- 80% goes to treasury instead
-- Total treasury: 80% + 15% = 95%
-- Creator still gets 5%
+## Price Mechanics
 
-**No Frontend Referrer:**
-- N/A (removed frontend fee)
+### Price Decay (Dutch Auction)
+
+After each bid, the minimum price to dethrone the King decays over 24 hours:
+
+| Phase | Time | Price |
+|-------|------|-------|
+| A | 0 → 1h | 2x → 1.1x last bid |
+| B | 1h → 24h | 1.1x → $10 |
+| C | 24h+ | $10 floor |
+
+### Payout Decay
+
+The previous King's share of the new bid decays over time:
+
+| Phase | Time | King Gets |
+|-------|------|-----------|
+| 1 | 0 → 1h | 80% |
+| 2 | 1h → 6h | 80% → 60% |
+| 3 | 6h → 24h | 60% → 20% |
+| 4 | 24h+ | 20% |
+
+As King payout decreases, Treasury share increases proportionally.
 
 ---
 
@@ -125,187 +116,67 @@ USDC Bid
 
 ### Dual Pool System
 
-```
-Every bid → 15% to Treasury
-Treasury splits into two pools:
+Every Treasury deposit is split:
+- **Megapot Pool** (~67%): Auto-buys Megapot lottery tickets
+- **Reserve Pool** (~33%): Governance-controlled
 
-┌─────────────┐
-│  megapotBps │ (default 10%, configurable)
-│  = 1000     │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐     ┌─────────────────┐
-│  Megapot Pool   │     │  Reserve Pool   │
-│  (auto tickets) │     │  (owner ctrl)   │
-│  10% of bid     │     │  5% of bid      │
-└─────────────────┘     └─────────────────┘
-```
+### Revenue Streams into Treasury
 
-### Megapot Pool
+1. **Bid residual** (15-75% of each bid)
+2. **Referral fees** (50% of harvested referral fees)
+3. **Megapot winnings** (auto-claimed on deposit)
 
-- Accumulates 10% of each bid (configurable 0-15%)
-- Anyone can call `processTickets()` to buy lottery tickets
-- Owner can adjust via `setMegapotBps()`
+### Outflows
 
-### Reserve Pool
-
-- Accumulates remainder (5% default)
-- Owner-controlled via `withdraw()` and `execute()`
-- Future uses: DONUT buyback, distributions, operations
+1. **Megapot tickets** — purchased automatically via MegapotRouter
+2. **BuybackBurner** — owner can transfer reserve USDC to Dutch auction
+3. **Governance** — owner can withdraw from reserve
 
 ---
 
-## Price Discovery
+## Deflationary Mechanics: BuybackBurner
 
-### Dutch Auction Mechanics
+The BuybackBurner creates permanent liquidity through a Dutch auction:
 
-```
-Start Price = 2 × Last Bid
-Decay Period = 1 hour
-End Price = 0
+1. Treasury sends USDC to BuybackBurner
+2. Users sell LOTTERY-USDC LP tokens for USDC at the auction price
+3. BuybackBurner sends acquired LP tokens to `0xdead` (permanently locked)
 
-Price at time t:
-price(t) = startPrice × (1 - t/decayPeriod)
+This removes LP from circulation, permanently locking liquidity and creating deflationary pressure on the LOTTERY supply.
 
-Example:
-├── Last bid: 100 USDC
-├── Start price: 200 USDC
-├── After 30 min: 100 USDC
-├── After 45 min: 50 USDC
-├── After 60 min: 0 USDC
-```
-
-### Minimum Bid Rules
-
-| Condition | Minimum Bid |
-|-----------|-------------|
-| First ever bid | Any amount > 0 |
-| During decay | Current auction price |
-| After full decay | 10% above last bid |
+| Parameter | Value |
+|-----------|-------|
+| Epoch period | 24 hours |
+| Price multiplier | 1.2x per epoch |
+| Minimum price | 1 USDC per LP |
+| Starting price | 10 USDC per LP |
 
 ---
 
-## Token Utility
+## Referral Fee Loop
 
-### Current Utility
-
-1. **Speculation** - Price discovery via market
-2. **Future Claims** - May entitle holder to jackpot distribution
-
-### Planned Utility (Future)
-
-1. **Jackpot Share** - If Megapot tickets win, holders claim pro-rata
-2. **Governance** - Vote on treasury usage
-3. **Staking** - Stake for enhanced rewards
-
----
-
-## Economic Flows
-
-### Mining Flow
+A self-reinforcing revenue cycle:
 
 ```
-User has USDC
-       │
-       ▼
-┌─────────────────┐
-│ mine(amount)    │
-│                 │
-│ Pay USDC        │
-│ Become King     │
-│ Earn emissions  │
-└─────────────────┘
-       │
-       ├── 80% USDC → Previous King
-       ├── 5% USDC  → Creator
-       └── 15% USDC → Treasury
+King bids → Treasury gets USDC → Buys Megapot tickets
+    ↑                                      │
+    │                              Referral fees (10%)
+    │                                      │
+    └──── 50% back to King ◄───── ReferralCollector
+                                           │
+                                    50% to Treasury
 ```
 
-### Emission Flow
-
-```
-Time passes
-       │
-       ▼
-┌─────────────────┐
-│ King earns      │
-│ 1 token/second  │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│ claimEmissions()│
-│                 │
-│ Mint $LOTTERY   │
-│ to King         │
-└─────────────────┘
-```
-
----
-
-## Supply Dynamics
-
-### Inflationary Pressure
-
-- Constant 1 token/second emission
-- No max supply
-- Supply grows linearly forever
-
-### Deflationary Mechanisms (Future)
-
-- Treasury could buy and burn $LOTTERY
-- Fee burns (if implemented)
-- Unclaimed emissions (if King doesn't claim)
-
-### Supply Projections
-
-| Time | Circulating Supply |
-|------|-------------------|
-| Day 1 | 86,400 |
-| Week 1 | 604,800 |
-| Month 1 | ~2.6M |
-| Year 1 | ~31.5M |
-| Year 5 | ~157.7M |
-
----
-
-## Comparison to DONUT
-
-| Aspect | DONUT | $LOTTERY |
-|--------|-------|----------|
-| Mining Token | ETH | USDC |
-| Emission | Halving | Constant |
-| Fee Split | 80/15/5 | 80/5/15 |
-| Governance | gDONUT voting | TBD |
-| Treasury Use | Revenue Router | Flexible |
+The more bids → more tickets → more referral fees → more King income → more incentive to bid.
 
 ---
 
 ## Risk Factors
 
-### Inflation Risk
-- Unlimited supply means continuous dilution
-- Mitigated by: utility, burns, demand
-
-### King Game Risk
-- Low activity = low treasury revenue
-- Mitigated by: compelling rewards, community
-
-### Smart Contract Risk
-- New contracts, not audited
-- Mitigated by: simple design, testing
-
----
-
-## Summary
-
-| Metric | Value |
-|--------|-------|
-| Emission Rate | 1 token/second |
-| Mining Currency | USDC |
-| Previous King Fee | 80% |
-| Creator Fee | 5% |
-| Treasury Fee | 15% |
-| Auction Decay | 1 hour |
-| Min Bid Increase | 10% |
+| Risk | Mitigation |
+|------|------------|
+| Low activity | Price decay to $10 floor ensures accessibility |
+| Inflation | 100M hard cap, BuybackBurner deflation |
+| Smart contract | Audited, 131 tests, fork-tested on mainnet |
+| Megapot dependency | Best-effort try/catch, silent failures |
+| One-time setters | Accepted risk, prevents malicious reconfiguration |

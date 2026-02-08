@@ -67,13 +67,13 @@ vercel --prod
 
 ## Contract Integration
 
-Contracts on Base Sepolia (see `src/lib/contracts.ts`):
+Contracts on Base Mainnet (see `src/lib/contracts.ts`):
 
 ```typescript
 export const ADDRESSES = {
-  LOTTERY_MINER: '0x757f0cbBb7be9aaaEdFAB04632e4293BB4e0a73E',
-  LOTTERY_TOKEN: '0x329fDa672F359c8422a790Df4e2BEBd96453C096',
-  LOTTERY_TREASURY: '0x1E389cf75155E34A8901388a70c4c1B1d94e0333',
+  LOTTERY_TOKEN: '0x07911ee281161f498Ae86acBad93F397ba35E0D3',
+  LOTTERY_MINER: '0xd1DA10c6179693F05d15D420f5FE49405Da8a52B',
+  LOTTERY_TREASURY: '0xa680443Bc34E65D1fBaA0BF47ebEc5EF4f370E04',
   // ...
 }
 ```
@@ -140,7 +140,7 @@ src/
 
 None required for frontend (uses public RPC).
 
-Contracts are on Base Sepolia testnet.
+Contracts are on Base Mainnet.
 
 ---
 

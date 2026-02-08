@@ -1,223 +1,112 @@
-# $LOTTERY - Implementation Plan (Simplified)
+# $LOTTERY - System Architecture
 
 ## Overview
 
-A Farcaster Mini App for $LOTTERY token with:
-- **King Game Mining** - Compete to earn $LOTTERY via USDC bids
-- **Treasury Revenue** - Accumulates 15% of mining fees
-- **Future Distribution** - Treasury has hooks for adding distribution logic later
-
-**Philosophy**: Ship simple now, add distribution complexity later.
+A Farcaster Mini App on Base where users bid USDC to become "King" and earn $LOTTERY tokens. The system generates revenue through Megapot lottery ticket purchases and referral fees.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   $LOTTERY SYSTEM                        │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  MINE $LOTTERY              TREASURY                    │
-│  (King game)          →    (accumulates USDC)           │
-│                                                         │
-│  ┌─────────────┐          ┌─────────────────┐          │
-│  │ LotteryMiner│───15%───▶│ LotteryTreasury │          │
-│  │             │          │                 │          │
-│  │ 80% → prev  │          │ 10% → Megapot   │          │
-│  │ 5%  → creator          │ 5% → Reserve    │          │
-│  └─────────────┘          └─────────────────┘          │
-│         │ mint                                          │
-│         ▼                                               │
-│  ┌─────────────┐                                        │
-│  │ LotteryToken│                                        │
-│  │   (ERC20)   │                                        │
-│  └─────────────┘                                        │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     $LOTTERY SYSTEM (v2)                      │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────┐    ┌──────────────────┐    ┌────────────┐  │
+│  │ LotteryMiner│───▶│ LotteryTreasury  │───▶│  Megapot   │  │
+│  │ (King game) │    │ (fee routing)    │    │ (tickets)  │  │
+│  └──────┬──────┘    └────────┬─────────┘    └─────┬──────┘  │
+│         │                    │                     │         │
+│    mint │           deposit  │            referral │ fees    │
+│         ▼                    ▼                     ▼         │
+│  ┌─────────────┐    ┌──────────────────┐    ┌────────────┐  │
+│  │ LotteryToken│    │ BuybackBurner    │    │ Referral   │  │
+│  │ (ERC20+Vote)│    │ (LP auction)     │    │ Collector  │  │
+│  └─────────────┘    └──────────────────┘    └────────────┘  │
+│                                                              │
+│  ┌─────────────┐                                             │
+│  │MegapotRouter│  Routes ticket purchases with referral      │
+│  └─────────────┘                                             │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Contracts (3 total)
+## Contracts (6 total)
 
 ### 1. LotteryToken.sol
-Standard ERC20 with minter role.
+ERC20 with voting (ERC20Votes) and one-time LP premine.
 
-```solidity
-// Key features
-- ERC20 token "LOTTERY"
-- Only LotteryMiner can mint
-- Standard transfer (no tax)
-```
+- 100M max supply hard cap
+- 5M premine (5%) minted directly to LP pair
+- Only LotteryMiner can mint (via emissions)
 
 ### 2. LotteryMiner.sol
-King game with USDC mining.
+Core game logic — King-of-the-hill with USDC bids.
 
-```solidity
-// Mining mechanics
-- Dutch auction: price starts at 2x last bid, decays to 0 over 1 hour
-- Bidder becomes "King", earns 1 $LOTTERY/second
-- Fee split (automatic on each bid):
-  - 80% → Previous King
-  - 5%  → Creator (hardcoded, immutable)
-  - 15% → Treasury
-
-// Key functions
-mine(bidAmount)            // Become King
-claimEmissions()           // Claim earned $LOTTERY
-getCurrentPrice()          // View current auction price
-
-// Key state
-address public immutable creator;    // Receives 5%
-address public treasury;             // Receives 15%
-```
+- **Price decay:** 2x→1.1x (1h), 1.1x→$10 (23h), $10 floor after 24h
+- **Payout decay:** 80% (first hour) → 20% (after 24h)
+- **Emissions:** 1 $LOTTERY/sec, capped at 7 days per reign
+- **MEV protection:** epochId + deadline on mine()
+- **Auto-harvest:** Referral fees harvested on mine() and claimEmissions()
 
 ### 3. LotteryTreasury.sol
-Receives 15% of fees, auto-buys Megapot tickets, holds reserve.
+Receives treasury share of bids, routes to Megapot and reserve.
 
-```solidity
-// Automatic (permissionless)
-processTickets()           // Buy Megapot tickets with megapotPool
+- **Megapot pool** (~67%): Auto-purchases tickets on every deposit
+- **Reserve pool** (~33%): Governance-controlled
+- **Auto-claim:** Megapot winnings claimed on every deposit
+- **BuybackBurner:** Can transfer reserve to LP auction
 
-// Owner functions
-withdraw(address to, uint256 amount)  // Withdraw from reserve
-execute(address target, bytes data)   // Call any contract
-setMegapotBps(uint256 bps)            // Change Megapot % (default 1000 = 10%)
+### 4. MegapotRouter.sol
+Purchases Megapot tickets with ReferralCollector as referrer.
 
-// Key state
-uint256 public megapotBps = 1000;     // 10% of total bid (configurable)
-uint256 public megapotPool;           // Accumulates for Megapot
-uint256 public reservePool;           // Remaining (5% default)
-```
+### 5. ReferralCollector.sol
+Harvests Megapot referral fees (10% of ticket cost).
 
-**How it works:**
-1. Miner sends 15% to Treasury
-2. Treasury splits: megapotBps% → megapotPool, rest → reservePool
-3. Anyone calls `processTickets()` → buys Megapot tickets
-4. Owner can change megapotBps anytime (0-1500 range)
+- 50% → current King
+- 50% → Treasury reserve
 
----
+### 6. BuybackBurner.sol
+Dutch auction selling USDC for LOTTERY-USDC LP tokens, then burns them to 0xdead.
 
-## Project Structure
-
-```
-lottery/
-├── contracts/
-│   ├── src/
-│   │   ├── LotteryToken.sol
-│   │   ├── LotteryMiner.sol
-│   │   └── LotteryTreasury.sol
-│   ├── test/
-│   │   └── Lottery.t.sol
-│   ├── script/
-│   │   └── Deploy.s.sol
-│   └── foundry.toml
-│
-└── frontend/
-    ├── src/
-    │   ├── app/
-    │   │   ├── layout.tsx
-    │   │   ├── page.tsx           # Main app (sdk.actions.ready())
-    │   │   └── api/
-    │   ├── components/
-    │   │   ├── mining/
-    │   │   │   ├── KingStatus.tsx
-    │   │   │   ├── MineButton.tsx
-    │   │   │   └── ClaimEmissions.tsx
-    │   │   └── stats/
-    │   │       ├── TokenBalance.tsx
-    │   │       └── TreasuryBalance.tsx
-    │   ├── hooks/
-    │   │   ├── useMiner.ts
-    │   │   └── useTreasury.ts
-    │   ├── lib/
-    │   │   ├── contracts.ts
-    │   │   └── wagmiConfig.ts
-    │   └── public/
-    │       └── .well-known/farcaster.json
-    ├── next.config.ts
-    └── vercel.json
-```
+- 24h epoch periods with 1.2x price multiplier
+- Creates permanent, locked liquidity
 
 ---
 
-## Implementation Steps
+## Fee Split (per bid)
 
-### Phase 1: Setup
-1. Initialize Foundry project in `contracts/`
-2. Initialize Next.js project in `frontend/`
-3. Install dependencies (OpenZeppelin, wagmi, farcaster-sdk)
-
-### Phase 2: Smart Contracts
-1. **LotteryToken.sol** - ERC20 with minter
-2. **LotteryMiner.sol** - King game, emissions, fee split
-3. **LotteryTreasury.sol** - Simple accumulator with distribution hooks
-4. Write tests on Base fork
-5. Deploy script
-
-### Phase 3: Frontend
-1. Farcaster SDK setup (`sdk.actions.ready()`)
-2. wagmi config with Farcaster connector
-3. Mining UI (King status, bid, claim emissions)
-4. Stats UI (token balance, treasury balance)
-
-### Phase 4: Deploy
-1. Deploy contracts to Base
-2. Deploy frontend to Vercel
-3. Test full flow in Warpcast
+| Recipient | Share | Calculation |
+|-----------|-------|-------------|
+| Previous King | 20-80% | Time-decaying (80% at 0h → 20% at 24h) |
+| Creator | 5% | Fixed, immutable |
+| Treasury | 15-75% | Residual (grows as King payout shrinks) |
 
 ---
 
-## Key Files to Create
+## Key Mechanics
 
-| File | Purpose |
-|------|---------|
-| `contracts/src/LotteryToken.sol` | ERC20 token with minter |
-| `contracts/src/LotteryMiner.sol` | King game mining |
-| `contracts/src/LotteryTreasury.sol` | Revenue accumulator + future hooks |
-| `frontend/src/app/page.tsx` | Main app with sdk.ready() |
-| `frontend/src/lib/contracts.ts` | Contract ABIs + addresses |
-| `frontend/public/.well-known/farcaster.json` | Farcaster manifest |
+### Price Decay (3 phases)
+- **Phase A (0-1h):** 2x → 1.1x last bid (linear)
+- **Phase B (1h-24h):** 1.1x → $10 floor (linear)
+- **Phase C (24h+):** $10 absolute minimum
 
----
+### Payout Decay (4 phases)
+- **Phase 1 (0-1h):** 80% to previous King
+- **Phase 2 (1h-6h):** 80% → 60% (linear)
+- **Phase 3 (6h-24h):** 60% → 20% (linear)
+- **Phase 4 (24h+):** 20% floor
 
-## Contract Addresses (Base)
-
-| Contract | Address |
-|----------|---------|
-| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
-| Megapot | `0xbEDd4F2beBE9E3E636161E644759f3cbe3d51B95` |
-| LotteryToken | TBD (deploy) |
-| LotteryMiner | TBD (deploy) |
-| LotteryTreasury | TBD (deploy) |
+### Referral Fee Loop
+1. Treasury auto-buys Megapot tickets via MegapotRouter
+2. MegapotRouter sets ReferralCollector as referrer
+3. Megapot accumulates 10% referral fees
+4. On mine()/claimEmissions(), fees auto-harvested (50% King, 50% Treasury)
 
 ---
 
-## Config Values
+## Deployed Addresses
 
-| Parameter | Value |
-|-----------|-------|
-| Emission rate | 1 $LOTTERY/second |
-| Prev King fee | 80% |
-| Creator fee | 5% (hardcoded, immutable) |
-| Treasury fee | 15% total |
-| └─ Megapot fee | 10% (configurable, default) |
-| └─ Reserve fee | 5% (remainder) |
-| Price decay | 1 hour |
-| Min bid increase | 10% |
-
----
-
-## Treasury Mechanics
-
-Treasury receives 15% of all mining fees, then:
-
-1. **Megapot Pool** (default 10%)
-   - Accumulates for lottery tickets
-   - Anyone can call `processTickets()` to buy
-   - Owner can change % via `setMegapotBps()`
-
-2. **Reserve Pool** (remaining 5%)
-   - Owner-controlled
-   - Future uses: DONUT buyback, distributions, ops
+See [README.md](README.md) for Base mainnet contract addresses.
