@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
 import { KingStatus } from '@/components/mining/KingStatus'
 import { MineButton } from '@/components/mining/MineButton'
 import { Stats } from '@/components/mining/Stats'
 import { useFarcasterUser } from '@/hooks/useFarcasterUser'
+import { TARGET_CHAIN_ID } from '@/lib/wagmiConfig'
 
 // Dynamic imports for non-critical tabs (code splitting)
 const Treasury = dynamic(() => import('@/components/Treasury').then(mod => ({ default: mod.Treasury })), {
@@ -167,6 +168,15 @@ function BottomNav({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: 
 
 function Dashboard({ address }: { address: string }) {
   const [activeTab, setActiveTab] = useState<Tab>('mine')
+  const { chainId: walletChainId } = useAccount()
+  const { switchChain } = useSwitchChain()
+
+  // Auto-switch to Base if wallet is on wrong network
+  useEffect(() => {
+    if (walletChainId && walletChainId !== TARGET_CHAIN_ID) {
+      switchChain({ chainId: TARGET_CHAIN_ID })
+    }
+  }, [walletChainId, switchChain])
 
   return (
     <main className="min-h-screen p-4">
@@ -184,26 +194,24 @@ function Dashboard({ address }: { address: string }) {
           <div className="divider" />
 
           {/* Tab content */}
-          <div className="mt-4">
+          <div className="mt-4 min-h-[60vh]">
             {activeTab === 'mine' && (
               <div className="space-y-4 stagger-children">
                 <KingStatus />
                 <div className="divider-dotted" />
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <MineButton />
-                  </div>
+                <div className="space-y-4">
+                  <MineButton />
                   <Stats />
                 </div>
               </div>
             )}
             {activeTab === 'treasury' && (
-              <div className="max-h-[50vh] overflow-y-auto -mx-1 px-1 pb-4">
+              <div className="overflow-y-auto -mx-1 px-1 pb-4">
                 <Treasury />
               </div>
             )}
             {activeTab === 'about' && (
-              <div className="max-h-[50vh] overflow-y-auto -mx-1 px-1 pb-4">
+              <div className="overflow-y-auto -mx-1 px-1 pb-4">
                 <About />
               </div>
             )}

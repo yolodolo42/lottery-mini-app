@@ -15,7 +15,7 @@ export const TARGET_CHAIN_ID = base.id
 // Without these, chainId from useAccount() may be undefined when on other chains,
 // which breaks wrong-network detection.
 export const config = createConfig({
-  chains: [baseSepolia, mainnet, base, sepolia],
+  chains: [base, baseSepolia, mainnet, sepolia],
   transports: {
     [baseSepolia.id]: http(),
     [mainnet.id]: http(),
