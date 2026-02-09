@@ -38,15 +38,15 @@ export function Stats() {
   const usdcBalanceNum = formatTokenNumber(usdcBalance, 6)
 
   return (
-    <div className="space-y-3">
+    <div className="card space-y-3">
       {/* $LOTTERY balance */}
-      <div className="stat">
+      <div className="flex items-center justify-between">
         <p className="stat-label">$LOTTERY</p>
         <FlipDigit value={lotteryBalance} digits={5} size="sm" />
       </div>
 
       {/* USDC balance */}
-      <div className="stat">
+      <div className="flex items-center justify-between">
         <p className="stat-label">USDC</p>
         <FlipDigit value={usdcBalanceNum} digits={5} size="sm" />
       </div>

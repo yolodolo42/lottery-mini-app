@@ -143,25 +143,30 @@ function UserPill({ address }: { address: string }) {
 
 function BottomNav({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (tab: Tab) => void }) {
   return (
-    <nav className="nav mt-4 -mx-5 -mb-5">
-      <button
-        onClick={() => setActiveTab('mine')}
-        className={`nav-item ${activeTab === 'mine' ? 'active' : ''}`}
-      >
-        Mine
-      </button>
-      <button
-        onClick={() => setActiveTab('treasury')}
-        className={`nav-item ${activeTab === 'treasury' ? 'active' : ''}`}
-      >
-        Treasury
-      </button>
-      <button
-        onClick={() => setActiveTab('about')}
-        className={`nav-item ${activeTab === 'about' ? 'active' : ''}`}
-      >
-        About
-      </button>
+    <nav
+      className="nav fixed bottom-0 left-0 right-0 z-50 bg-paper border-t border-accent-border"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      <div className="flex justify-around max-w-md mx-auto">
+        <button
+          onClick={() => setActiveTab('mine')}
+          className={`nav-item ${activeTab === 'mine' ? 'active' : ''}`}
+        >
+          Mine
+        </button>
+        <button
+          onClick={() => setActiveTab('treasury')}
+          className={`nav-item ${activeTab === 'treasury' ? 'active' : ''}`}
+        >
+          Treasury
+        </button>
+        <button
+          onClick={() => setActiveTab('about')}
+          className={`nav-item ${activeTab === 'about' ? 'active' : ''}`}
+        >
+          About
+        </button>
+      </div>
     </nav>
   )
 }
@@ -179,7 +184,7 @@ function Dashboard({ address }: { address: string }) {
   }, [walletChainId, switchChain])
 
   return (
-    <main className="min-h-screen p-4">
+    <main className="min-h-screen p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)' }}>
       <div className="max-w-md mx-auto">
         {/* Main card */}
         <div className="card p-6">
@@ -194,7 +199,7 @@ function Dashboard({ address }: { address: string }) {
           <div className="divider" />
 
           {/* Tab content */}
-          <div className="mt-4 min-h-[60vh]">
+          <div className="mt-4">
             {activeTab === 'mine' && (
               <div className="space-y-4 stagger-children">
                 <KingStatus />
@@ -205,22 +210,14 @@ function Dashboard({ address }: { address: string }) {
                 </div>
               </div>
             )}
-            {activeTab === 'treasury' && (
-              <div className="overflow-y-auto -mx-1 px-1 pb-4">
-                <Treasury />
-              </div>
-            )}
-            {activeTab === 'about' && (
-              <div className="overflow-y-auto -mx-1 px-1 pb-4">
-                <About />
-              </div>
-            )}
+            {activeTab === 'treasury' && <Treasury />}
+            {activeTab === 'about' && <About />}
           </div>
-
-          {/* Navigation */}
-          <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
       </div>
+
+      {/* Fixed bottom navigation */}
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </main>
   )
 }
